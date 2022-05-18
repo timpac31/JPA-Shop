@@ -1,0 +1,108 @@
+* 동적 SQL 생성
+ @DynamicUpdate, @DynamicInsert 컬럼 30개 이상이면 동적쿼리가 더 빠른편
+ 
+* 플러시 일어나는 시점 
+ 1. em.flush() 직접 호출
+ 2. 트랜잭션 commit
+ 3. JPQL 쿼리 실행 - JPQL은 1차캐시 안거치고 DB에서 가져옴
+
+* 기본키 매핑
+ 1. IDENTITY - DBMS auto_increment 사용 (MySQL, SQL server, PostgreSQL 등), DB 저장 후 식별키 획득
+ 2. SEQUENCE - DBMS sequence 사용 (Oracle, DB2, H2 등), 시퀀스에서 식별키 획득 후 저장
+ 3. TABLE 
+ 4. AUTO - DBMS의 Dialect을 따른다 (Oracle-sequence, MySQL-Identity)
+ 
+* 연관관계
+ 1. 단방향 - N:1, 1:1
+  - 일대다 단방향 : 외래키가 다른 데이블에 위치해서 insert 시 update 추가로 일어남. 다대일 단방향을 사용하자!
+ 2. 양방향 
+
+ 3. 일대일 
+  - 주테이블에 외래키 : 단방향 , 양방향 가능
+  - 대상테이블에 외래키 : 양방향만 가능
+  
+ * 상속 관계 매핑
+ 1. 조인 전략
+  - 장점 : 테이블 정규화, 저장공간 효율적
+  - 단점 : 조회할 때 조인사용, 조회쿼리 복잡, Insert 두번 실행
+  
+ 2. 단일테이블 전략
+  - 장점 : 조회 성능이 빠름
+  - 단점 : 저장공간이 비효율적
+ 
+ 3. 구현클래스마다 테이블 전략
+  - 장점 : 서브타입 구분, not null 제약조건 사용가능
+  - 단점 : 조회성능 안좋음, 자식테이블 통합 쿼리 복잡함, 일반적으로 잘 안쓰임.
+
+ * 조인 테이블
+ 1. 조인컬럼(외래키) 사용 
+  - 선택적 비식별 관계일경우에 null 값을 가지는 경우가 많아 저장공간 낭비될 수 있음
+ 2. 조인 테이블 사용
+  - 조인을 3개 테이블로 해야 함..
+  
+ * 프록시 
+  - 지연로딩을 위해서 사용됨
+  - EntityManager.getReference() 하면 프록시가 반환됨.
+  - 실제 값을 요청할 때 영속성컨텍스트와 DB를 조회하여 실제 엔티티생성하여 실제 엔티티의 메소드 호출
+  - 연관관계 설정할 때 식별자 값만 필요하므로 프록시를 사용하면 DB 접근횟수를 줄일 수 있다.
+  
+ * 기본패치 전략
+  - ManyToOne, OneToOne : 즉시로딩(FetchType.EAGER)
+  - OneToMany, ManyToMany : 지연로딩(FetchType.LAZY)
+  
+ * 영속성 전이 (CASCADE)
+  - 엔티티를 저장할 때 연관된 모든 엔티티는 영속상태여야 한다. 이럴 때 영속성 전이를 사용하면 부모만 영속상태로 만들면 연관된 엔티티도 영속상태가 된다.
+  - orphanRemoval = true : 고아객체 제거, 참조연관관계가 제거된 엔티티를 삭제
+ 
+ * Value Object
+  - 단순 수치 정보
+  - 식별키가 없음
+  - 라이프사이클이 없음
+  - Cascade, orphanRemoval이 기본적으로 적용됨
+  - immutable 객체로 만드는 것이 안전하다
+  
+  * Value Collection
+   - @ElementCollection, @CollectionTable 사용하여 매핑
+   - 식별키가 없으므로 수정이 되면 연관된 모든 컬렉션을 삭제한 후 저장함 : 매핑되는 데이터가 많다면 값 타입 컬렉션 보다는 Entity로 매핑하는 것이 좋다
+  
+  * JPQL Fetch Join
+   - 연관된 엔티티나 컬렉션을 한번에 같이 조인하여 가져옴. N+1 문제 해결
+   - 한계 : 둘 이상의 컬렉션 패치조인이 안됨 : 최악의 경우 카테이산 곱 발생, 성능 이슈
+        : 컬렉션 페치 조인은 페이징이 안됨.
+        
+  * 벌크 연산의 주의점
+   - JPQL bulk 연산은 DB에 직접 접근하여 업데이트하기 때문에 DB 데이터와 영속성컨텍스트 데이터가 다를 수 있다는 점 주의
+   - 해결방안 : 벌크연산 후 엔티티 사용하기전에 em.refresh(), 벌크연산 후에 조회하기, 벌크연산 후에 영속성컨텍스트 초기화
+   
+  * JPQL과 영속성
+   - JPQL로 조회한 엔티티가 영속성컨텍스트에 있으면 DB에서 조회한 걸 버리고 기존에 영속성컨텍스트에 있던 엔티티를 반환한다
+   - JPQL로 조회한 엔티티가 영속성컨텍스트에 없으면 영속성컨텍스트에 추가한다
+   
+  * 준영속상태에서 지연로딩을 시도하면 에러 발생. 해결방법
+   - 미리 로딩하는 방법
+    1.글로벌 패치 전략 수정 : EAGER 로딩으로 변경, N+1 문제 발생할 수 있음.
+    2.JPQL Fetch Join : 프리젠테이션 계층에 의존하여 메소드가 증가됨
+    3.강제로 초기화 : 트랜잭션내에서 프리젠테이션 계층이 필요한 의존관계를 강제로 초기화하여 반환, 프리젠테이션 계층의 로직이 서비스계층을 침범하게 됨 -> FACADE 계층도입
+   - OSIV(Open Session In View) 사용
+    : View에서도 지연로딩이 가능
+   
+ * OSIV 주의점
+   - 프리젠테이션 계층에서 엔티티를 수정한 후 직후에 트랜잭션을 시작하는 서비스계층을 다시 호출하면 영속성컨텍스트 플러시가 일어나서 수정사항이 DB에 반영된다.
+     반영되지 않게 하려면 비즈니스 로직을 먼저 모두 호출한 후 수정하자
+ 
+ * Enityty Equals 재정의 주의사항
+  - 프록시도 동등성을 유지하려면 두가지 주의사항이 있다.
+   : getClass() 비교 대신 instanceof 로 타입을 비교해야한다.
+   : 프록시는 member.id 같이 직접 참조가 안되므로 메소드로 호출해야한다. member.getId()       
+     
+ * 읽기전용으로 성능향상
+  - 스칼라 타입으로 조회 select o.id, o.name, o.price from Order o
+  - 읽기전용 힌트 사용 TypedQuery<Order> query = em.createQuery("select o from Order o", Order.class);  query.hint("org.hibernate.readOnly", true);
+  - 읽기 전용 트랜잭션 사용 @Transactional(readOnly = true)
+  - 트랜잭션 밖에서 읽기 @Transactional(propagation = Propagation.NOT_SUPPORED)
+  
+  
+  
+   
+    
+ 

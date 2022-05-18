@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{component :: header}">
+</head>
+<body>
+	<form name="orderFrm" th:action="@{/order}" method="post">
+	<div class="container">
+		<ul>
+			<li>
+				주문회원<br>
+				<select name="customerId" class="form-select">
+					<option th:each="customer : ${customers}" th:value="${customer.id}" th:text="${customer.name}"></option>
+				</select>
+			</li>
+			<li>
+				상품명<br>
+				<select name="itemId" class="form-select">
+					<option th:each="item : ${items}" th:value="${item.id}" th:text="${item.name}"></option>
+				</select>
+			</li>
+			<li>주문수량 : <input name="orderItemQuantity" type="text" class="form-control" /></li>
+		</ul>
+		<input type="submit" value="주문" class="btn btn-primary" />
+	</div>
+	</form>
+</body>
+</html>

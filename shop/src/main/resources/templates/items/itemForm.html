@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{component :: header}">
+</head>
+<body>
+	<form name="createFrm" th:action="@{/items/new}" method="post">
+	<input type="hidden" name="id" th:value="${item?.id}" />
+	<div class="container">
+		<ul>
+			<li>상품명 : <input type="text" th:name="name" th:value="${item?.name}" /></li>
+			<li>가격 : <input type="text" th:name="price" th:value="${item?.price}" /></li>
+			<li>수량 : <input type="text" th:name="stockQuantity" th:value="${item?.stockQuantity}" /></li>
+		</ul>
+		<input type="submit" value="등록" />
+	</div>
+	</form>
+</body>
+</html>

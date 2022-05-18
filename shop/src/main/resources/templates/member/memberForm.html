@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{component :: header}">
+</head>
+<body>
+	<form name="createFrm" th:action="@{/member/new}" method="post">
+	<input type="hidden" name="id" th:value="${member?.id}" />
+	<div class="container">
+		<ul>
+			<li>이름 : <input type="text" th:name="username" th:value="${member?.username}" /></li>
+			<li>나이 : <input type="text" th:name="age" th:value="${member?.age}" /></li>
+		</ul>
+		<input type="submit" value="등록" />
+	</div>
+	</form>
+</body>
+</html>

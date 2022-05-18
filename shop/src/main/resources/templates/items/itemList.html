@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:insert="~{component :: header}">
+</head>ead>
+<body>
+	<div class="container">
+		<h2>상품 리스트</h2>
+		<div>
+			<table class="table-striped">
+				<thead>
+				<tr>
+					<th>id</th>
+					<th>상품명</th>
+					<th>가격</th>
+					<th>재고수량</th>
+					<th></th>
+				</tr>
+				</thead>
+				<tbody>
+				<tr th:each="item : ${items}">
+					<td th:text="${item.id}"></td>
+					<td th:text="${item.name}"></td>
+					<td th:text="${item.price}"></td>
+					<td th:text="${item.stockQuantity}"></td>
+					<td><a th:href="@{/items/{itemId}/edit(itemId=${item.id})}" class="btn btn-primary">수정</a></td>
+				</tr>
+				</tbody>
+			</table>
+		</div>		
+		
+		<div>
+			<a href="/items/new">등록</a>
+		</div>
+	</div>
+</body>
+</html>
